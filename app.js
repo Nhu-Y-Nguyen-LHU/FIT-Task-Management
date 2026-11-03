@@ -122,14 +122,22 @@ function requestDriveToken() {
   });
 }
 function driveRequest(url, options = {}) {
-  const headers = { ...(options.headers || {}), Authorization: ['Bearer', driveToken].join(' ') };
-  return fetch(url, { ...options, headers }).then(async (response) => {
+  const request = async (retry = true) => {
+    const headers = { ...(options.headers || {}), Authorization: "Bearer " + driveToken };
+    const response = await fetch(url, { ...options, headers });
+    if (response.status === 401 && retry) {
+      driveToken = "";
+      await requestDriveToken();
+      return request(false);
+    }
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(`Google Drive lỗi ${response.status}: ${body.slice(0, 180)}`);
+      throw new Error(`Google Drive lỗi ${response.status}: ${body.slice(0, 240)}`);
     }
+    if (response.status === 204) return null;
     return response.json();
-  });
+  };
+  return request();
 }
 function workbookBlob() {
   const rows = state.tasks.map((task) => {
@@ -157,7 +165,11 @@ async function uploadMonthToDrive() {
       body: JSON.stringify({ name: folderName, mimeType: "application/vnd.google-apps.folder", parents: [parentId] })
     });
   }
-  const metadata = { name: `task-board-${folderName}.xlsx`, parents: [monthFolder.id], mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
+  const fileName = `task-board-${folderName}.xlsx`;
+  const existingFile = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`'${monthFolder.id}' in parents and name = '${fileName}' and trashed = false`)}&fields=files(id,name)&pageSize=1`);
+  const fileId = existingFile.files[0]?.id;
+  const metadata = { name: fileName, mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
+  if (!fileId) metadata.parents = [monthFolder.id];
   const boundary = `task-board-${crypto.randomUUID()}`;
   const body = new Blob([
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
@@ -165,8 +177,11 @@ async function uploadMonthToDrive() {
     workbookBlob(),
     `\r\n--${boundary}--`
   ]);
-  await driveRequest("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink", {
-    method: "POST",
+  const uploadUrl = fileId
+    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart&fields=id,name,webViewLink`
+    : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink";
+  await driveRequest(uploadUrl, {
+    method: fileId ? "PATCH" : "POST",
     headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
     body
   });

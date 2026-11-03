@@ -26,7 +26,7 @@ Task và cài đặt được lưu trong `localStorage`, không cần tài kho�
 
 ## Google Drive OAuth
 
-Trong **Cài đặt lưu trữ**, nhập link thư mục Drive gốc, bấm **Lưu cài đặt**, sau đó bấm **Kết nối Google Drive** và cấp quyền. Nút **Lưu Excel tháng này** sẽ tạo hoặc dùng lại thư mục con theo định dạng `YYYY-MM`, rồi tải file Excel vào đó.
+Trong **Cài đặt lưu trữ**, nhập link thư mục Drive gốc, bấm **Lưu cài đặt**, sau đó bấm **Kết nối Google Drive** và cấp quyền. Nút **Lưu Excel tháng này** sẽ tạo hoặc dùng lại thư mục con theo định dạng `YYYY-MM`, rồi tạo hoặc cập nhật file `task-board-YYYY-MM.xlsx` trong đó. Nếu access token hết hạn, ứng dụng sẽ yêu cầu cấp lại token và thử lại một lần.
 
 Để OAuth hoạt động, Google Cloud project của Client ID cần bật Google Drive API, cấu hình OAuth consent screen và thêm domain đang chạy ứng dụng vào **Authorized JavaScript origins**. Client Secret không được dùng trong ứng dụng frontend và không được đưa vào mã nguồn. Token chỉ được giữ trong bộ nhớ của phiên hiện tại; việc tự động cuối tháng chỉ chạy khi trang đang mở.
 # FIT-Task-Management
