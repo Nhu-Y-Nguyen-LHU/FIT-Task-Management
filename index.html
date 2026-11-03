@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Board - Quản lý công việc</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">TASK BOARD</p>
+      <h1>Quản lý công việc</h1>
+    </div>
+    <div class="topbar-actions">
+      <button class="button button-secondary" id="templateBtn">Tải file mẫu</button>
+      <label class="button button-secondary" for="importInput">Import Excel</label>
+      <input id="importInput" type="file" accept=".xlsx,.xls,.csv" hidden>
+      <button class="button button-primary" id="exportBtn">Export Excel</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="summary-row" aria-label="Tổng quan">
+      <article class="summary-card"><span>Tổng task</span><strong id="totalTasks">0</strong></article>
+      <article class="summary-card"><span>Đang thực hiện</span><strong id="activeTasks">0</strong></article>
+      <article class="summary-card"><span>Trong tháng</span><strong id="monthTasks">0</strong></article>
+      <article class="summary-card"><span>Lần lưu gần nhất</span><strong id="lastSaved">Chưa lưu</strong></article>
+    </section>
+
+    <section class="toolbar">
+      <div class="month-control">
+        <button class="square-button" id="previousMonth" aria-label="Tháng trước">&lt;</button>
+        <h2 id="monthLabel"></h2>
+        <button class="square-button" id="nextMonth" aria-label="Tháng sau">&gt;</button>
+        <button class="button button-secondary small" id="todayBtn">Hôm nay</button>
+      </div>
+      <div class="view-tabs" role="tablist" aria-label="Chế độ xem">
+        <button class="tab active" data-view="month">Tháng</button>
+        <button class="tab" data-view="week">Tuần</button>
+        <button class="tab" data-view="day">Ngày</button>
+        <button class="tab" data-view="gantt">Gantt</button>
+      </div>
+      <button class="button button-primary" id="addTaskBtn">Thêm task</button>
+    </section>
+
+    <section class="notice" id="notice" hidden></section>
+    <section class="workspace">
+      <div class="calendar-panel panel" id="calendarPanel"></div>
+    </section>
+
+    <section class="help-strip">
+      <div><strong>Kéo thả để cập nhật</strong><span>Di chuyển task trên lịch hoặc Gantt. Hệ thống sẽ cảnh báo nếu lịch mới ảnh hưởng các task trong 3 ngày tới.</span></div>
+      <button class="button button-secondary" id="settingsBtn">Cài đặt lưu trữ</button>
+    </section>
+  </main>
+
+  <dialog id="taskDialog">
+    <form method="dialog" id="taskForm" class="modal">
+      <div class="modal-heading">
+        <div><p class="eyebrow">TASK</p><h2 id="dialogTitle">Thêm task mới</h2></div>
+        <button type="button" class="close-button" id="closeTaskDialog" aria-label="Đóng">×</button>
+      </div>
+      <input type="hidden" id="taskId">
+      <div class="form-grid">
+        <label class="field full">Tên task / work item<input id="taskName" required maxlength="120" placeholder="Ví dụ: Hoàn thiện báo cáo tháng"></label>
+        <label class="field full">Bao thuộc task cha <span class="muted">(để trống nếu là task gốc)</span><select id="parentId"><option value="">Task gốc</option></select></label>
+        <label class="field">Ngày bắt đầu<input id="startDate" type="date" required></label>
+        <label class="field">Ngày kết thúc<input id="endDate" type="date" required></label>
+        <label class="field">Thời gian dự kiến (giờ)<input id="estimatedHours" type="number" min="0" step="0.5" required></label>
+        <label class="field">Loại công việc<input id="taskType" maxlength="60" placeholder="Thiết kế, Họp..."></label>
+        <label class="field">Mức độ ưu tiên<select id="priority"><option value="urgent">Khẩn cấp</option><option value="high">Cao</option><option value="medium" selected>Trung bình</option><option value="low">Thấp</option></select></label>
+        <label class="field">Lặp lại<select id="recurrence"><option value="">Không lặp</option><option value="weekly">Hàng tuần</option><option value="monthly">Hàng tháng</option></select></label>
+        <label class="field">Kết thúc lặp <span class="muted">(không bắt buộc)</span><input id="recurrenceEnd" type="date"></label>
+      </div>
+      <p class="form-error" id="formError" hidden></p>
+      <div class="modal-actions"><button type="button" class="button button-secondary" id="cancelTaskBtn">Hủy</button><button class="button button-primary" value="default">Lưu task</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" class="modal" id="settingsForm">
+      <div class="modal-heading"><div><p class="eyebrow">LƯU TRỮ</p><h2>Cài đặt lưu trữ</h2></div><button type="button" class="close-button" id="closeSettingsDialog">×</button></div>
+      <p class="modal-copy">Dữ liệu được lưu ngay trên trình duyệt bằng localStorage. Task cha và subtask đều là work item riêng, có ngày và số giờ độc lập; work tree chỉ dùng để nhóm và quản lý.</p>
+      <label class="field full">Link thư mục Google Drive (tùy chọn)<input id="driveFolder" type="url" placeholder="https://drive.google.com/drive/folders/..."></label>
+      <p class="muted">Kết nối Google để tự tạo hoặc dùng thư mục con theo tháng (YYYY-MM), rồi tải file Excel tháng hiện tại lên Drive.</p>
+      <p class="muted" id="driveStatus">Chưa kết nối Google Drive.</p>
+      <div class="modal-actions"><button type="button" class="button button-danger" id="clearDataBtn">Xóa sạch dữ liệu</button><button type="button" class="button button-secondary" id="openDriveBtn">Mở thư mục</button><button type="button" class="button button-secondary" id="connectDriveBtn">Kết nối Google Drive</button><button type="button" class="button button-primary" id="uploadDriveBtn">Lưu Excel tháng này</button><button class="button button-primary" value="default">Lưu cài đặt</button></div>
+    </form>
+  </dialog>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="app.js"></script>
+</body>
+</html>
