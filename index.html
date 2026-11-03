@@ -79,13 +79,13 @@
   </dialog>
 
   <dialog id="settingsDialog">
-    <form method="dialog" class="modal" id="settingsForm">
+    <form class="modal" id="settingsForm">
       <div class="modal-heading"><div><p class="eyebrow">LƯU TRỮ</p><h2>Cài đặt lưu trữ</h2></div><button type="button" class="close-button" id="closeSettingsDialog">×</button></div>
       <p class="modal-copy">Dữ liệu được lưu ngay trên trình duyệt bằng localStorage. Task cha và subtask đều là work item riêng, có ngày và số giờ độc lập; work tree chỉ dùng để nhóm và quản lý.</p>
       <label class="field full">Link thư mục Google Drive (tùy chọn)<input id="driveFolder" type="url" placeholder="https://drive.google.com/drive/folders/..."></label>
       <p class="muted">Kết nối Google để tự tạo hoặc dùng thư mục con theo tháng (YYYY-MM), rồi tải file Excel tháng hiện tại lên Drive.</p>
       <p class="muted" id="driveStatus">Chưa kết nối Google Drive.</p>
-      <div class="modal-actions"><button type="button" class="button button-danger" id="clearDataBtn">Xóa sạch dữ liệu</button><button type="button" class="button button-secondary" id="openDriveBtn">Mở thư mục</button><button type="button" class="button button-secondary" id="connectDriveBtn">Kết nối Google Drive</button><button type="button" class="button button-primary" id="uploadDriveBtn">Lưu Excel tháng này</button><button class="button button-primary" value="default">Lưu cài đặt</button></div>
+      <div class="modal-actions"><button type="button" class="button button-danger" id="clearDataBtn">Xóa sạch dữ liệu</button><button type="button" class="button button-secondary" id="openDriveBtn">Mở thư mục</button><button type="button" class="button button-secondary" id="connectDriveBtn">Kết nối Google Drive</button><button type="button" class="button button-primary" id="uploadDriveBtn">Lưu Excel tháng này</button><button type="submit" class="button button-primary">Lưu cài đặt</button></div>
     </form>
   </dialog>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>

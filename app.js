@@ -95,6 +95,29 @@ function driveFolderId(value) {
   const match = String(value).match(/\/folders\/([a-zA-Z0-9_-]+)/);
   return match ? match[1] : String(value).trim();
 }
+function readSettings() {
+  try {
+    const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    return settings && typeof settings === "object" ? settings : {};
+  } catch (error) {
+    console.error("Không thể đọc cài đặt lưu trữ", error);
+    return {};
+  }
+}
+function saveSettings() {
+  const driveFolder = $("#driveFolder").value.trim();
+  if (driveFolder) {
+    try {
+      const url = new URL(driveFolder);
+      if (url.protocol !== "https:" || !url.hostname.endsWith("google.com")) throw new Error();
+    } catch (error) {
+      showNotice("Link thư mục Google Drive không hợp lệ.");
+      return false;
+    }
+  }
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ driveFolder }));
+  return true;
+}
 function requestDriveToken() {
   return new Promise((resolve, reject) => {
     if (!window.google?.accounts?.oauth2) {
@@ -150,7 +173,7 @@ function workbookBlob() {
 }
 async function uploadMonthToDrive() {
   if (!window.XLSX) throw new Error("Thư viện Excel chưa tải xong.");
-  const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+  const settings = readSettings();
   const parentId = driveFolderId(settings.driveFolder);
   if (!parentId) throw new Error("Hãy lưu link thư mục Drive trước.");
   await requestDriveToken();
@@ -480,12 +503,12 @@ $("#exportBtn").addEventListener("click", () => exportExcel());
 $("#templateBtn").addEventListener("click", () => exportExcel("task-board-template.xlsx"));
 $("#importInput").addEventListener("change", (event) => { if (event.target.files[0]) importExcel(event.target.files[0]); event.target.value = ""; });
 $("#settingsBtn").addEventListener("click", () => {
-  $("#driveFolder").value = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}").driveFolder || "";
+  $("#driveFolder").value = readSettings().driveFolder || "";
   $("#driveStatus").textContent = driveToken ? "Đã kết nối Google Drive trong phiên này." : "Chưa kết nối Google Drive.";
   $("#settingsDialog").showModal();
 });
 $("#closeSettingsDialog").addEventListener("click", () => $("#settingsDialog").close());
-$("#settingsForm").addEventListener("submit", (event) => { event.preventDefault(); localStorage.setItem(SETTINGS_KEY, JSON.stringify({ driveFolder: $("#driveFolder").value.trim() })); $("#settingsDialog").close(); showNotice("Đã lưu cài đặt trên trình duyệt.", "success"); });
+$("#settingsForm").addEventListener("submit", (event) => { event.preventDefault(); if (!saveSettings()) return; $("#settingsDialog").close(); showNotice("Đã lưu cài đặt trên trình duyệt.", "success"); });
 $("#openDriveBtn").addEventListener("click", () => { const link = $("#driveFolder").value.trim(); if (link) window.open(link, "_blank", "noopener"); else showNotice("Hãy nhập link thư mục Google Drive trước."); });
 $("#connectDriveBtn").addEventListener("click", async () => {
   try {
@@ -498,7 +521,7 @@ $("#connectDriveBtn").addEventListener("click", async () => {
 });
 $("#uploadDriveBtn").addEventListener("click", async () => {
   try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ driveFolder: $("#driveFolder").value.trim() }));
+    if (!saveSettings()) return;
     await uploadMonthToDrive();
     $("#settingsDialog").close();
     showNotice(`Đã lưu file Excel tháng ${monthKey(state.month)} vào Google Drive.`, "success");
