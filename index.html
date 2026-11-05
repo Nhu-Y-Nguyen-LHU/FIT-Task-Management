@@ -88,6 +88,16 @@
       <div class="modal-actions"><button type="button" class="button button-danger" id="clearDataBtn">Xóa sạch dữ liệu</button><button type="button" class="button button-secondary" id="openDriveBtn">Mở thư mục</button><button type="button" class="button button-secondary" id="connectDriveBtn">Kết nối Google Drive</button><button type="button" class="button button-primary" id="uploadDriveBtn">Lưu Excel tháng này</button><button type="submit" class="button button-primary">Lưu cài đặt</button></div>
     </form>
   </dialog>
+  <dialog id="deadlineDialog">
+    <div class="modal deadline-modal">
+      <div class="modal-heading">
+        <div><p class="eyebrow">DEADLINE</p><h2 id="deadlineTitle">Cảnh báo deadline</h2></div>
+        <button type="button" class="close-button" id="closeDeadlineDialog" aria-label="Đóng">×</button>
+      </div>
+      <p class="deadline-message" id="deadlineMessage"></p>
+      <div class="modal-actions"><button type="button" class="button button-primary" id="ackDeadlineBtn">Đã hiểu</button></div>
+    </div>
+  </dialog>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://accounts.google.com/gsi/client"></script>
   <script src="app.js"></script>

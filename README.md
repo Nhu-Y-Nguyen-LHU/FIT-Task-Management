@@ -20,6 +20,8 @@ Tích checkbox trên Calendar hoặc Gantt để đánh dấu hoàn thành. Trê
 
 Nhấp chuột phải vào task trên Calendar hoặc Gantt để xóa task. Khi xóa task cha, toàn bộ task con bên dưới cũng được xóa sau khi xác nhận.
 
+Kéo task sang ô ngày khác sẽ chỉ đổi ngày bắt đầu và giữ nguyên deadline/ngày kết thúc. Không thể dồn task sang sau deadline; số giờ và các task chồng lịch được giữ nguyên. Sau khi dồn task, hệ thống mở popup cho biết số ngày còn lại đến deadline. Ngày có task đến deadline được đánh dấu đỏ nổi bật; task vẫn giữ màu theo mức độ ưu tiên nhưng hiển thị dịu hơn. Với task kéo dài nhiều ngày, chỉ lần hiển thị ở ngày kết thúc mới được đánh dấu DEADLINE màu đỏ.
+
 ## Lưu trữ
 
 Task và cài đặt được lưu trong `localStorage`, không cần tài khoản. Nút **Cài đặt lưu trữ** cho phép lưu link thư mục Google Drive để mở nhanh. Do giới hạn bảo mật của trình duyệt, việc ghi file trực tiếp vào Drive cần OAuth/Google API; công cụ tự động tải file vào ngày cuối tháng để người dùng đưa vào thư mục đã cấu hình.

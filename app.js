@@ -217,6 +217,10 @@ function calendarTasksOnDate(date) {
   const dateValue = iso(date);
   return sortTasks(state.tasks.filter((task) => !task.recurrence && task.startDate <= dateValue && task.endDate >= dateValue));
 }
+function hasDeadlineOnDate(date) {
+  const dateValue = iso(date);
+  return state.tasks.some((task) => !task.recurrence && task.endDate === dateValue);
+}
 function setSingleTaskCompletion(taskId, completed) {
   const task = state.tasks.find((item) => item.id === taskId);
   if (!task) return [];
@@ -239,13 +243,15 @@ function renderSummary() {
   $("#monthLabel").textContent = monthLabel(state.month);
 }
 function taskStyle(task) { return `background:${priorityColors[task.priority || "medium"] || "#1f5f8b"};`; }
-function taskMarkup(task) {
+function taskMarkup(task, dateValue = "") {
   const parent = task.parentId ? state.tasks.find((item) => item.id === task.parentId) : null;
   const label = parent
     ? `<span class="task-title">${escapeHtml(parent.name)}</span><span class="subtask-title">${escapeHtml(task.name)}</span>`
     : `<span class="task-title">${escapeHtml(task.name)}</span>`;
   const plainLabel = parent ? `${parent.name} / ${task.name}` : task.name;
-  return `<div class="day-task ${task.completed ? "completed" : ""}" draggable="true" data-task-id="${task.id}" style="${taskStyle(task)}" title="${escapeHtml(plainLabel)} | ${formatDate(task.startDate)} - ${formatDate(task.endDate)}"><label class="task-check"><input type="checkbox" data-complete-id="${task.id}" data-complete-scope="single" ${task.completed ? "checked" : ""}><span></span></label>${label}<span>${task.estimatedHours} giờ · ${priorityLabels[task.priority || "medium"]}</span></div>`;
+  const isDeadline = dateValue === task.endDate;
+  const details = task.notes ? ` | ${task.notes}` : "";
+  return `<div class="day-task ${task.completed ? "completed" : ""} ${isDeadline ? "deadline-task" : ""}" draggable="true" data-task-id="${task.id}" style="${taskStyle(task)}" title="${escapeHtml(plainLabel)} | ${formatDate(task.startDate)} - ${formatDate(task.endDate)}${isDeadline ? " · DEADLINE" : ""}${escapeHtml(details)}"><label class="task-check"><input type="checkbox" data-complete-id="${task.id}" data-complete-scope="single" ${task.completed ? "checked" : ""}><span></span></label>${label}<span>${task.estimatedHours} giờ · ${priorityLabels[task.priority || "medium"]}${isDeadline ? " · DEADLINE" : ""}</span></div>`;
 }
 function renderMonth() {
   const first = new Date(state.month.getFullYear(), state.month.getMonth(), 1);
@@ -254,7 +260,7 @@ function renderMonth() {
   for (let i = 0; i < 42; i += 1) {
     const date = new Date(start); date.setDate(start.getDate() + i);
     const tasks = calendarTasksOnDate(date);
-    cells.push(`<div class="day-cell ${date.getMonth() !== state.month.getMonth() ? "outside" : ""} ${iso(date) === iso(new Date()) ? "today" : ""}" data-date="${iso(date)}"><div class="day-number">${date.getDate()}</div>${tasks.map(taskMarkup).join("")}</div>`);
+    cells.push(`<div class="day-cell ${date.getMonth() !== state.month.getMonth() ? "outside" : ""} ${iso(date) === iso(new Date()) ? "today" : ""}" data-date="${iso(date)}"><div class="day-number">${date.getDate()}</div>${tasks.map((task) => taskMarkup(task, iso(date))).join("")}</div>`);
   }
   $("#calendarPanel").innerHTML = `<div class="calendar-header">${["CN", "T2", "T3", "T4", "T5", "T6", "T7"].map((day) => `<div>${day}</div>`).join("")}</div><div class="calendar-grid">${cells.join("")}</div>`;
 }
@@ -266,7 +272,7 @@ function renderAgenda() {
   for (let i = 0; i < count; i += 1) {
     const date = new Date(start); date.setDate(start.getDate() + i);
     const tasks = calendarTasksOnDate(date);
-    html += `<div class="agenda-row"><div class="agenda-date">${date.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit" })}</div><div class="agenda-content">${tasks.length ? tasks.map(taskMarkup).join("") : '<span class="muted">Không có task</span>'}</div></div>`;
+    html += `<div class="agenda-row"><div class="agenda-date">${date.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit" })}</div><div class="agenda-content">${tasks.length ? tasks.map((task) => taskMarkup(task, iso(date))).join("") : '<span class="muted">Không có task</span>'}</div></div>`;
   }
   $("#calendarPanel").innerHTML = `${html}</div>`;
 }
@@ -385,20 +391,28 @@ function saveTask(event) {
   if (index >= 0) state.tasks[index] = values; else state.tasks.push(values);
   save(); $("#taskDialog").close(); render(); showNotice(index >= 0 ? "Đã cập nhật task." : "Đã thêm task mới.", "success");
 }
-function affectedTasks(task, oldStart, oldEnd) {
-  const changed = Math.abs(toDate(task.startDate) - toDate(oldStart)) + Math.abs(toDate(task.endDate) - toDate(oldEnd));
-  if (!changed) return [];
-  const limit = new Date(toDate(task.endDate)); limit.setDate(limit.getDate() + 3);
-  return state.tasks.filter((other) => other.id !== task.id && other.startDate <= iso(limit) && other.endDate >= task.startDate);
+function showDeadlineModal(task) {
+  const today = iso(new Date());
+  const daysRemaining = Math.round((toDate(task.endDate) - toDate(today)) / 86400000);
+  $("#deadlineTitle").textContent = daysRemaining < 0 ? "Task đã quá deadline" : "Cảnh báo deadline";
+  $("#deadlineMessage").textContent = daysRemaining < 0
+    ? `Task "${task.name}" đã quá deadline ${Math.abs(daysRemaining)} ngày (deadline: ${formatDate(task.endDate)}).`
+    : daysRemaining === 0
+      ? `Task "${task.name}" đến deadline hôm nay (${formatDate(task.endDate)}).`
+      : `Task "${task.name}" còn ${daysRemaining} ngày đến deadline (${formatDate(task.endDate)}).`;
+  $("#deadlineDialog").showModal();
 }
 function moveTask(id, targetDate) {
   const task = state.tasks.find((item) => item.id === id); if (!task) return;
-  const oldStart = task.startDate; const oldEnd = task.endDate; const duration = daysBetween(oldStart, oldEnd);
-  const start = toDate(targetDate); const end = new Date(start); end.setDate(start.getDate() + duration - 1);
-  task.startDate = iso(start); task.endDate = iso(end);
+  if (targetDate > task.endDate) {
+    showNotice(`Không thể dồn task "${task.name}" sau deadline ${formatDate(task.endDate)}.`, "warning");
+    return;
+  }
+  if (targetDate === task.startDate) return;
+  task.startDate = targetDate;
   save(); render();
-  const affected = affectedTasks(task, oldStart, oldEnd);
-  showNotice(affected.length ? `Đã đổi lịch "${task.name}". Cảnh báo: có ${affected.length} task có thể bị ảnh hưởng trong 3 ngày tới.` : `Đã đổi lịch "${task.name}" và đồng bộ dữ liệu.`, affected.length ? "warning" : "success");
+  showNotice(`Đã dồn task "${task.name}" và giữ nguyên deadline.`, "success");
+  showDeadlineModal(task);
 }
 function deleteTask(taskId) {
   const task = state.tasks.find((item) => item.id === taskId);
@@ -508,6 +522,8 @@ $("#settingsBtn").addEventListener("click", () => {
   $("#settingsDialog").showModal();
 });
 $("#closeSettingsDialog").addEventListener("click", () => $("#settingsDialog").close());
+$("#closeDeadlineDialog").addEventListener("click", () => $("#deadlineDialog").close());
+$("#ackDeadlineBtn").addEventListener("click", () => $("#deadlineDialog").close());
 $("#settingsForm").addEventListener("submit", (event) => { event.preventDefault(); if (!saveSettings()) return; $("#settingsDialog").close(); showNotice("Đã lưu cài đặt trên trình duyệt.", "success"); });
 $("#openDriveBtn").addEventListener("click", () => { const link = $("#driveFolder").value.trim(); if (link) window.open(link, "_blank", "noopener"); else showNotice("Hãy nhập link thư mục Google Drive trước."); });
 $("#connectDriveBtn").addEventListener("click", async () => {

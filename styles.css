@@ -65,6 +65,8 @@ h2 { font-size: 18px; }
 .day-cell.today { background: #fff9e6; }
 .day-number { font-size: 12px; font-weight: 700; margin-bottom: 5px; }
 .day-task { border-radius: 3px; padding: 4px 5px; color: white; font-size: 11px; margin: 3px 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: grab; }
+.day-task { opacity: .72; }
+.day-task.deadline-task { background: #ff1744 !important; opacity: 1; box-shadow: 0 0 0 2px #fff, 0 0 8px #ff1744; }
 .day-task span { display: block; opacity: .8; font-size: 10px; }
 .day-task .task-title, .day-task .subtask-title { display: block; opacity: 1; font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
 .day-task .task-title { font-weight: 700; }
@@ -103,7 +105,7 @@ h2 { font-size: 18px; }
 .gantt-label.child { padding-left: 18px; }
 .gantt-bar { position: absolute; height: 25px; border-radius: 3px; color: white; padding: 5px 8px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; z-index: 1; }
 .gantt-bar.group-bar { height: 17px; top: 14px; opacity: .42; color: var(--navy); font-size: 10px; }
-.gantt-bar.child-bar { height: 25px; top: 10px; }
+.gantt-bar.child-bar { height: 25px; top: 10px; opacity: .72; }
 .gantt-bar.completed { filter: brightness(.55); }
 .gantt-label .task-check { color: var(--blue); }
 .help-strip { margin-top: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
@@ -124,5 +126,7 @@ dialog::backdrop { background: #102a4366; }
 .form-error { color: var(--maroon); background: #fbeef0; padding: 9px; margin-top: 15px; font-size: 12px; }
 .modal-actions { justify-content: flex-end; margin-top: 22px; }
 .modal-copy { font-size: 13px; line-height: 1.6; margin-bottom: 17px; }
+.deadline-message { font-size: 17px; line-height: 1.6; color: var(--ink); }
+.deadline-modal { border-top: 5px solid var(--gold); }
 @media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } .task-panel { order: -1; } .task-list { max-height: 210px; grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 650px) { .topbar, .toolbar, .help-strip { align-items: stretch; flex-direction: column; } .topbar-actions { flex-wrap: wrap; } .summary-row { grid-template-columns: repeat(2, 1fr); } .view-tabs { justify-content: center; } .calendar-panel { overflow-x: auto; } .calendar-header, .calendar-grid { min-width: 620px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } }
