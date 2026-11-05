@@ -1,6 +1,5 @@
 const STORAGE_KEY = "task-board-v1";
 const SETTINGS_KEY = "task-board-settings-v1";
-const DEMO_KEY = "task-board-demo-loaded-v1";
 const GOOGLE_CLIENT_ID = "1004464823457-iip5aecmm9ku0qaculf2f1o98hvsnnc6.apps.googleusercontent.com";
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
 let driveToken = "";
@@ -50,12 +49,6 @@ function load() {
       return [parent, child];
     });
     if (state.tasks.some((task) => task.parentId)) save();
-    if (!state.tasks.length && !localStorage.getItem(DEMO_KEY)) {
-      state.tasks = demoTasks();
-      localStorage.setItem(DEMO_KEY, "yes");
-      save();
-      showNotice("Đã nạp dữ liệu mẫu 30 ngày để bạn thử lịch và Gantt.", "success");
-    }
   } catch (error) { console.error("Không thể đọc dữ liệu đã lưu", error); state.tasks = []; }
 }
 function demoTasks() {
@@ -555,7 +548,6 @@ $("#uploadDriveBtn").addEventListener("click", async () => {
 $("#clearDataBtn").addEventListener("click", () => {
   if (!window.confirm("Bạn có chắc muốn xóa toàn bộ task và dữ liệu đã lưu không?")) return;
   localStorage.removeItem(STORAGE_KEY);
-  localStorage.setItem(DEMO_KEY, "yes");
   state.tasks = [];
   $("#settingsDialog").close();
   render();

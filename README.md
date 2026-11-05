@@ -2,7 +2,7 @@
 
 Công cụ quản lý task chạy hoàn toàn trên trình duyệt, phù hợp triển khai tĩnh trên GitHub Pages.
 
-Khi mở lần đầu, công cụ tự tạo dữ liệu mẫu trải dài 30 ngày trong tháng hiện tại: nhiều task cha, các subtask liền kề và các khoảng thời gian overlap để kiểm tra giao diện Calendar/Gantt. Dữ liệu mẫu chỉ được tạo một lần trên trình duyệt.
+Khi mở lần đầu, công cụ hiển thị bảng trống để nhập dữ liệu thật. Nút **Tải file mẫu** tạo file Excel độc lập có đầy đủ trường và dữ liệu minh họa để thử Calendar/Gantt hoặc dùng làm mẫu import.
 
 ## Chạy
 
