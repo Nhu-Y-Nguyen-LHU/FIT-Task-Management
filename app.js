@@ -162,11 +162,14 @@ function driveRequest(url, options = {}) {
   };
   return request();
 }
-function workbookBlob() {
-  const rows = state.tasks.map((task) => {
-    const parent = task.parentId ? state.tasks.find((item) => item.id === task.parentId) : null;
+function taskRows(tasks) {
+  return tasks.map((task) => {
+    const parent = task.parentId ? tasks.find((item) => item.id === task.parentId) : null;
     return { Task: task.name, "Task cha": parent?.name || "", "Ngày bắt đầu": task.startDate, "Ngày kết thúc": task.endDate, "Thời gian làm dự kiến (giờ)": task.estimatedHours, "Loại công việc": task.type, "Mức độ ưu tiên": priorityLabels[task.priority || "medium"], "Lặp lại": recurrenceLabels[task.recurrence] || "", "Kết thúc lặp": task.recurrenceEnd || "", "Đã xong": task.completed ? "Có" : "Chưa", "Thời gian hoàn thành": task.completed ? formatCompletedAt(task.completedAt) : "" };
   });
+}
+function workbookBlob(tasks = state.tasks) {
+  const rows = taskRows(tasks);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), "Tasks");
   return new Blob([XLSX.write(workbook, { bookType: "xlsx", type: "array" })], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
@@ -458,10 +461,7 @@ function bindDragEvents() {
 }
 function exportExcel(filename = `task-board-${monthKey(state.month)}.xlsx`) {
   if (!window.XLSX) { showNotice("Thư viện Excel chưa tải xong. Hãy thử lại sau ít giây."); return; }
-  const rows = state.tasks.map((task) => {
-    const parent = task.parentId ? state.tasks.find((item) => item.id === task.parentId) : null;
-    return { Task: task.name, "Task cha": parent?.name || "", "Ngày bắt đầu": task.startDate, "Ngày kết thúc": task.endDate, "Thời gian làm dự kiến (giờ)": task.estimatedHours, "Loại công việc": task.type, "Mức độ ưu tiên": priorityLabels[task.priority || "medium"], "Lặp lại": recurrenceLabels[task.recurrence] || "", "Kết thúc lặp": task.recurrenceEnd || "", "Đã xong": task.completed ? "Có" : "Chưa", "Thời gian hoàn thành": task.completed ? formatCompletedAt(task.completedAt) : "" };
-  });
+  const rows = taskRows(state.tasks);
   const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), "Tasks"); XLSX.writeFile(workbook, filename);
 }
 function importExcel(file) {
@@ -514,7 +514,14 @@ $("#nextMonth").addEventListener("click", () => { state.month.setMonth(state.mon
 $("#todayBtn").addEventListener("click", () => { state.month = new Date(new Date().getFullYear(), new Date().getMonth(), 1); render(); });
 document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => { state.view = tab.dataset.view; document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab)); render(); }));
 $("#exportBtn").addEventListener("click", () => exportExcel());
-$("#templateBtn").addEventListener("click", () => exportExcel("task-board-template.xlsx"));
+$("#templateBtn").addEventListener("click", () => {
+  if (!window.XLSX) { showNotice("Thư viện Excel chưa tải xong. Hãy thử lại sau ít giây."); return; }
+  const rows = taskRows(demoTasks());
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), "Tasks");
+  XLSX.writeFile(workbook, "task-board-template.xlsx");
+  showNotice("Đã tải file mẫu gồm các trường và dữ liệu minh họa.", "success");
+});
 $("#importInput").addEventListener("change", (event) => { if (event.target.files[0]) importExcel(event.target.files[0]); event.target.value = ""; });
 $("#settingsBtn").addEventListener("click", () => {
   $("#driveFolder").value = readSettings().driveFolder || "";
@@ -548,10 +555,10 @@ $("#uploadDriveBtn").addEventListener("click", async () => {
 $("#clearDataBtn").addEventListener("click", () => {
   if (!window.confirm("Bạn có chắc muốn xóa toàn bộ task và dữ liệu đã lưu không?")) return;
   localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(DEMO_KEY);
+  localStorage.setItem(DEMO_KEY, "yes");
   state.tasks = [];
   $("#settingsDialog").close();
   render();
-  showNotice("Đã xóa sạch toàn bộ dữ liệu task.", "success");
+  showNotice("Đã xóa sạch toàn bộ dữ liệu task. File mẫu mặc định vẫn có thể tải lại.", "success");
 });
 load(); render(); maybeAutoExport();
